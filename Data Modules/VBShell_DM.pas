@@ -24,6 +24,9 @@ type
     cdsSystemUserPASSWORD: TStringField;
     cdsSystemUserACCOUNT_ENABLED: TIntegerField;
     dtsSystemUser: TDataSource;
+    cdsDBInfo: TFDMemTable;
+    dtsDBInfo: TDataSource;
+    cdsDBInfoDB_VERSION: TIntegerField;
   private
     { Private declarations }
   public

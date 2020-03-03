@@ -6,6 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, Vcl.Forms,
   System.Classes, Vcl.Graphics, System.ImageList, Vcl.ImgList, Vcl.Controls,
   Vcl.Dialogs, System.Actions, Vcl.ActnList, System.Win.Registry, Winapi.ShellApi,
+  Vcl.StdCtrls, Vcl.Menus,
 
   Base_Frm, VersionInformation, VBProxyClass,
 
@@ -13,8 +14,7 @@ uses
   dxSkinsDefaultPainters, dxScreenTip, dxCustomHint, cxHint, cxImageList,
   cxGraphics, cxLookAndFeels, dxSkinsForm, dxSkinMoneyTwins, cxControls,
   cxLookAndFeelPainters, dxRibbonSkins, dxRibbonCustomizationForm, dxBar,
-  dxStatusBar, dxRibbonStatusBar, dxRibbon, dxBarBuiltInMenu, cxPC, Vcl.Menus,
-  Vcl.StdCtrls, cxButtons, dxSkinOffice2019Colorful, dxSkinTheBezier;
+  dxStatusBar, dxRibbonStatusBar, dxRibbon, dxBarBuiltInMenu, cxPC, cxButtons;
 
 type
   TmyDragObject = class(TcxDragControlObject)
@@ -55,19 +55,20 @@ type
     procedure pagAppsChange(Sender: TObject);
     procedure DoLaunchApplication(Sender: TObject);
     procedure pagAppsDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure pagAppsDragOver(Sender, Source: TObject; X, Y: Integer;
-      State: TDragState; var Accept: Boolean);
     procedure pagAppsStartDrag(Sender: TObject; var DragObject: TDragObject);
     procedure FormResize(Sender: TObject);
+
+    procedure pagAppsDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
   private
     { Private declarations }
     FJobH: THandle;
 //    FAppCount: Integer;
     FReady: Boolean;
 
-    property JobH: THandle read FJobH write FJobH;
+//    property JobH: THandle read FJobH write FJobH;
 //    property AppCount: Integer read FAppCount write FAppCount;
-    property Ready: Boolean read FReady write FReady;
+//    property Ready: Boolean read FReady write FReady;
   public
     { Public declarations }
   protected
@@ -169,7 +170,7 @@ begin
   RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
   RegKey.RootKey := HKEY_CURRENT_USER;
   try
-{$IFDEF DEBUG}
+    {$IFDEF DEBUG}
     ErrorMsg := '';
     if not LocalDSServerIsRunning(LOCAL_VB_SHELL_DS_SERVER, ErrorMsg) then
     begin
@@ -188,7 +189,7 @@ begin
         [mbOK]
         );
     end;
-{$ENDIF}
+    {$ENDIF}
     try
       RegKey.OpenKey(KEY_COMMON_RESOURCE_USER_PREFERENCES, True);
     except
@@ -330,6 +331,8 @@ begin
 //    // Example that uses elevated rundll to open the Control Panel to Programs and features
 //    RunAsAdmin(FormMain.Handle, 'rundll32.exe shell32.dll,Control_RunDLL appwiz.cpl', '');
 //  end;
+
+  VBBaseDM.CheckForUpdates(0, AppName);
 
   try
     Screen.Cursor := crHourglass;
@@ -640,12 +643,12 @@ begin
 
   // Get the message sent from the client app.
   S := PChar(DataStructure.lpData);
-  // When launching the client app, the client app sends a message to RC Shell
+  // When launching the client app, the client app sends a message to the Shell
   // indicating that is is fully launched and can then be docked.
   if AnsiCompareText(S, 'App Ready') = 0 then
     FReady := True
-  // When closing the client app, the client app sends a message to RC shell
-  // indicating that is is closed. This is necessary to tell RC Shell that the
+  // When closing the client app, the client app sends a message to the shell
+  // indicating that is is closed. This is necessary to tell VB Shell that the
   // tab in which the client app is docked can now be freed.
   else if CompareText(S, 'Close App') = 0 then
   begin
@@ -665,7 +668,7 @@ begin
           pagApps.Pages[I].Free;
         Break;
       end;
-    // Display/Hide ribbon depending on if any apps are open or not.
+    // Display/Hide ribbon depending on whther any apps are open or not.
     ribMain.ShowTabGroups := pagApps.PageCount = 0;
   end;
 end;

@@ -15,7 +15,8 @@ uses
   Winapi.ShellApi,
   System.Variants,
   ShlObj,
-  System.UITypes,
+  Progress_Frm in '..\..\..\..\..\Lib\Progress_Frm.pas' {ProgressFrm},
+  RUtils in '..\..\..\..\..\Lib\RUtils.pas',
   Main_Frm in 'General\Main_Frm.pas' {MainFrm},
   VBBase_DM in '..\..\Lib\VBBase_DM.pas' {VBBaseDM: TDataModule},
   CommonMethods in '..\..\..\..\Lib\CommonMethods.pas',
@@ -32,19 +33,17 @@ uses
   Login_Frm in 'General\Login_Frm.pas' {LoginFrm},
   ED in '..\..\..\..\Lib\ED.pas',
   USingleInst in '..\..\..\..\Lib\USingleInst.pas',
-  UMySingleInst in 'General\UMySingleInst.pas',
-  RUtils in '..\..\..\..\Lib\RUtils.pas',
-  Progress_Frm in '..\..\..\..\Lib\Progress_Frm.pas' {ProgressFrm};
+  UMySingleInst in 'General\UMySingleInst.pas';
 
 {$R *.res}
 
 var
-  { LaunchDrive, }AppFileName, AppFolder, TempFolder: string;
+  LaunchDrive, AppFileName, AppFolder, TempFolder: string;
   FoundNewVersion, ReleaseVersion: Boolean;
   ErrorMsg: string;
   AppHandle: HWND;
-// InstanceClass: TComponentClass;
-// FormReference: TForm;
+//  InstanceClass: TComponentClass;
+//  FormReference: TForm;
 
 const
   APP_NAME = 'VBShell.exe';
@@ -65,13 +64,12 @@ var
   aYear, aMonth, aDay, aHour, aMin, aSec, aMSec: Word;
   TheDate: Double;
   RegKey: TRegistry;
-// StartInfo: TStartupInfo;
-// ProcInfo: TProcessInformation;
-// Success: Boolean;
+  StartInfo: TStartupInfo;
+  ProcInfo: TProcessInformation;
+  Success: Boolean;
 begin
   try
-    Application.Title := APP_TITLE;
-    {$IFDEF DEBUG}
+{$IFDEF DEBUG}
     ErrorMsg := '';
     if not LocalDSServerIsRunning(LOCAL_VB_SHELL_DS_SERVER, ErrorMsg) then
     begin
@@ -87,19 +85,21 @@ begin
         [mbOK]
         );
     end;
-    {$ENDIF}
+{$ENDIF}
+
     ReleaseVersion := True;
-    {$IFDEF DEBUG}
+{$IFDEF DEBUG}
     ReleaseVersion := False;
-    {$ENDIF}
+{$ENDIF}
+
     if VBBaseDM = nil then
       VBBaseDM := TVBBaseDM.Create(nil);
 
     VBBaseDM.SetConnectionProperties;
     VBBaseDM.sqlConnection.Open;
-    VBBaseDM.Client := TVBServerMethodsClient.Create(VBBaseDM.sqlConnection.DBXConnection);
+    VBBaseDM.FClient := TVBServerMethodsClient.Create(VBBaseDM.sqlConnection.DBXConnection);
 
-    SL := RUtils.CreateStringList(PIPE);
+    SL := RUtils.CreateStringList(SL, PIPE);
     RegKey := TRegistry.Create(KEY_ALL_ACCESS);
     RegKey.RootKey := HKEY_CURRENT_USER;
     Response := '';
@@ -113,13 +113,14 @@ begin
       FoundNewVersion := False;
       RegKey.OpenKey(KEY_COMMON, True);
 
-      {$IFDEF DEBUG}
+{$IFDEF DEBUG}
       AppFolder := RegKey.ReadString('App Folder');
-      {$ELSE}
+{$ELSE}
       AppFolder := ExtractFilePath(Application.ExeName);
-      {$ENDIF}
+{$ENDIF}
+
       RegKey.CloseKey;
-// RegKey.OpenKey(KEY_RESOURCE, True);
+//      RegKey.OpenKey(KEY_RESOURCE, True);
       TempFolder := AppFolder + 'Temp\';
       TDirectory.CreateDirectory(TempFolder);
       AppFileName := AppFolder + APP_NAME;
@@ -132,36 +133,39 @@ begin
         'TARGET_FILE_TIMESTAMP=' + FormatDateTime('yyyy-MM-dd hh:mm:ss',
         CurrentAppFileTimestamp); // DateTimeToStr(CurrentAppFileTimestamp);
 
-      SL.DelimitedText := VBBaseDM.Client.GetFileVersion(Request, Response);
+      SL.DelimitedText := VBBaseDM.FClient.GetFileVersion(Request, Response);
       FoundNewVersion := SL.Values['RESPONSE'] = 'FOUND_NEW_VERSION';
       // Only do this if new version is found
       if FoundNewVersion then
       begin
         Screen.Cursor := crHourglass;
-
         if ProgressFrm = nil then
           ProgressFrm := TProgressFrm.Create(nil);
+        ProgressFrm.lblDownloadName.Caption := 'Downloading: VB Applications...';
 
-        ProgressFrm.prgDownload.Style.LookAndFeel.SkinName := '';
         ProgressFrm.Color := clGradientInactiveCaption;
+//        ProgressFrm.layMain.LayoutLookAndFeel :=  nil;
         ProgressFrm.layMain.ParentBackground := True;
-        ProgressFrm.prgDownload.Properties.BeginColor := $ED9564;
+//        ProgressFrm.prgDownload.Properties.BeginColor :=  clGreen;
+        ProgressFrm.prgDownload.Properties.BeginColor := clSkyBlue;
         ProgressFrm.Update;
         ProgressFrm.Show;
         ProgressFrm.Update;
-        SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, DWORD(PChar('Downloading VB Shell. Pleaswe wait...')), 0);
         FoundNewVersion := False;
         // Remove any existing files in the temp folcer
         if FileExists(TempFolder + APP_NAME) then
           TFile.Delete(TempFolder + APP_NAME);
 
-        // Do the actual download ------------------------------------------------------
+// Do the actual download ------------------------------------------------------
+
         try
           StreamSize := 0;
+          // Download the new file.
+          //
           // StreamSize variable returns the size of the file being downloaded.
           // The server will return a size of 0 if the file cannot be found or if
           // something else goes wrong.
-          ReturnStream := VBBaseDM.Client.DownloadFile(APP_NAME { Request }, Response, StreamSize);
+          ReturnStream := VBBaseDM.FClient.DownloadFile(Request, Response, StreamSize);
           ReturnStream.Position := 0;
           TotalBytesRead := 0;
           CycleCounter := 0;
@@ -178,19 +182,22 @@ begin
                 if CycleCounter = 100 then
                 begin
                   Progress := StrToFloat(TotalBytesRead.ToString) / StrToFloat(StreamSize.ToString) * 100;
-// DownloadCaption := 'CAPTION=';
-                  SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_PROGRESS, DWORD(PChar(FloatToStr(Progress))), 0);
-                  Application.ProcessMessages;
+                  DownloadCaption := 'CAPTION=';
+//                  SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, Integer('PROGRESS=' + FloatToStr(Progress)),  PChar(@DownloadCaption));
+//                  SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, Integer('PROGRESS=' + FloatToStr(Progress) + '|CAPTION='), 0);
+                  SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, DWORD(PChar('PROGRESS=' + FloatToStr(Progress) + '|CAPTION=')), 0);
                   CycleCounter := 0;
-// Application.ProcessMessages;
+                  Application.ProcessMessages;
                 end;
                 Inc(CycleCounter)
               end;
             until
               BytesRead < BufferSize;
           end;
-          DownloadCaption := 'Restarting VB Shell...';
-          SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, DWORD(PChar(DownloadCaption)), 0);
+          DownloadCaption := '|CAPTION=Restarting VB Applications...';
+//          SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, Integer('PROGRESS=' + FloatToStr(100) + PChar(@DownloadCaption)), 0);
+//          SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, Integer('PROGRESS=' + FloatToStr(Progress) + '|CAPTION="Restarting VB Applications..."'), 0);
+          SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, DWORD(PChar('PROGRESS=100' + '|CAPTION=Restarting_VB_Applications...')), 0);
           Application.ProcessMessages;
 
 // Download complete -----------------------------------------------------------
@@ -207,9 +214,9 @@ begin
         // to set the correct timestamp.
         // Get the string representation of the source file timestamp
         if Length(Trim(NewFileTimeStampString)) = 0 then
-          NewFileTimeStampString := FormatDateTime('yyyy-MM-dd hh:mm:ss', Now)
-        else
-          NewFileTimeStampString := SL.Values['FILE_TIMESTAMP']; // FormatDateTime('yyyy-MM-dd hh:mm:ss', CurrentAppFileTimestamp); //SL.Values['FILE_TIMESTAMP'];
+          NewFileTimeStampString := FormatDateTime('yyyy-MM-dd hh:mm:ss', Now);
+
+        NewFileTimeStampString := SL.Values['FILE_TIMESTAMP']; // FormatDateTime('yyyy-MM-dd hh:mm:ss', CurrentAppFileTimestamp); //SL.Values['FILE_TIMESTAMP'];
         // Convert this to a TDateTime value
         CurrentAppFileTimestamp := VarToDateTime(NewFileTimeStampString);
         // Get the handle of the file.
@@ -254,9 +261,9 @@ begin
         // Note:
         // For some reason I need to use Halt here to re-launch RC Shell successfully
         // The Application.Terminate does not always re-launch RC shell.
-        { TODO: Must investigate this issue and get it to work properly }
+        {TODO: Must investigate this issue and get it to work properly}
         Halt;
-// Application.Terminate;
+//        Application.Terminate;
       end;
     finally
       SL.Free;
@@ -269,11 +276,11 @@ begin
 end;
 
 begin
-// {$IFDEF RELEASE}
+{$IFDEF RELEASE}
   CheckForUpdates;
-// {$ENDIF}
+{$ENDIF}
 
-// CreateMutex(nil, False, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
+//  CreateMutex(nil, False, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
   CreateMutex(nil, True, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
   if GetLastError = ERROR_ALREADY_EXISTS then
   begin
@@ -296,8 +303,8 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   LoginFrm := TLoginFrm.Create(Application);
-// InstanceClass := TMainFrm;
-// FormReference := MainFrm;
+//    InstanceClass := TMainFrm;
+//    FormReference := MainFrm;
   LoginFrm.Update;
   LoginFrm.ShowModal;
   Application.Run;

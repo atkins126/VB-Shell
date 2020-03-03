@@ -112,10 +112,6 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\..\..\..\..\Lib\Progress_Frm.pas">
-            <Form>ProgressFrm</Form>
-        </DCCReference>
-        <DCCReference Include="..\..\..\..\..\Lib\RUtils.pas"/>
         <DCCReference Include="General\Main_Frm.pas">
             <Form>MainFrm</Form>
         </DCCReference>
@@ -152,6 +148,10 @@
         <DCCReference Include="..\..\..\..\Lib\ED.pas"/>
         <DCCReference Include="..\..\..\..\Lib\USingleInst.pas"/>
         <DCCReference Include="General\UMySingleInst.pas"/>
+        <DCCReference Include="..\..\..\..\Lib\RUtils.pas"/>
+        <DCCReference Include="..\..\..\..\Lib\Progress_Frm.pas">
+            <Form>ProgressFrm</Form>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

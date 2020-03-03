@@ -95,12 +95,11 @@ uses
 
 procedure TLoginFrm.FormCreate(Sender: TObject);
 var
-  SOAPResponse, ErrorMsg, UserName: string;
+  ErrorMsg, UserName: string;
   RegKey: TRegistry;
   SkinResourceFileName, SkinName: string;
-  RootFolder, RootDataFolder, OldRootFolder: string;
-  ReleaseVersion: Boolean;
-  I: Integer;
+//  RootFolder, RootDataFolder, OldRootFolder: string;
+//  I: Integer;
 begin
   inherited;
   Height := 225;
@@ -137,11 +136,6 @@ begin
     end;
 {$ENDIF}
 
-    ReleaseVersion := True;
-{$IFDEF DEBUG}
-    ReleaseVersion := False;
-{$ENDIF}
-
     if VBBaseDM = nil then
       VBBaseDM := TVBBaseDM.Create(nil);
 
@@ -173,7 +167,11 @@ begin
     UserName := '';
     VBShellDM.cdsSystemUser.Close;
 
-    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, '',
+    VBBaseDM.GetData(33, VBShellDM.cdsDBInfo, VBShellDM.cdsDBInfo.Name, ONE_SPACE,
+      'C:\Data\Xml\DB Info.xml', VBShellDM.cdsDBInfo.UpdateOptions.Generatorname,
+      VBShellDM.cdsDBInfo.UpdateOptions.UpdateTableName);
+
+    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, ONE_SPACE,
       'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
       VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
 
@@ -242,15 +240,20 @@ var
   ED: TED;
   PW: string;
 begin
-  ED := TED.Create(EKEY1, EKEY2);
-  try
-    PW := ED.DCString(VBBaseDM.FUserData.PW);
-  finally
-    ED.Free;
-  end;
+  Result := True;
 
-  Result := SameText(UserName, VBBaseDM.FUserData.UserName)
-    and SameStr(Password, PW);
+  if VBShellDM.cdsDBInfo.FieldByName('DB_VERSION').Asinteger > 13 then
+  begin
+    ED := TED.Create(EKEY1, EKEY2);
+    try
+      PW := ED.DCString(VBBaseDM.FUserData.PW);
+    finally
+      ED.Free;
+    end;
+
+    Result := SameText(UserName, VBBaseDM.FUserData.UserName)
+      and SameStr(Password, PW);
+  end;
 end;
 
 procedure TLoginFrm.DoCancelLogin(Sender: TObject);
@@ -271,93 +274,83 @@ begin
   VBBaseDM.FUserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
   VBBaseDM.FUserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
   VBBaseDM.FUserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
+  RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
 
   try
     // Use the user's Windows credentials to login to system.
     // Use this method to login via local machine
     Inc(FLoginAttempt);
-//    if not LoginToDB(edtUserName.Text, edtPassword.Text) then
-//    begin
-//      Beep;
-//      if LoginAttempt = 1 then
-//      begin
-//        DisplayMsg(
-//          FAppTitle,
-//          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-//          'Invalid username and/or password. Please note that passwords are case sensitive. ' +
-//          'Please ensure that your caps lock key is in the correct state and try again.',
-//          mtWarning,
-//          [mbOK]
-//          );
-//        Exit;
-//      end
-//
-//      else if FLoginAttempt = 2 then
-//      begin
-//        edtPassword.Clear;
-//        try
-//          edtPassword.SetFocus;
-//        except
-//        end;
-//        DisplayMsg(
-//          FAppTitle,
-//          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-//          'Invalid username and/or password. ' +
-//          'You have made two unsuccessfull attempts at logging in. ' +
-//          'Please ensure that your caps lock key is in the correct state and try again.',
-//          mtWarning,
-//          [mbOK]
-//          );
-//        Exit;
-//      end
-//
-//      else if FLoginAttempt >= 3 then
-//      begin
-//        edtPassword.Clear;
-//        try
-//          edtPassword.SetFocus;
-//        except
-//        end;
-//        DisplayMsg(
-//          FAppTitle,
-//          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-//          'This is your third unsuccessfull attempt at logging in. ' +
-//          'VB Shell cannot log you in and will now terminate.',
-//          mtWarning,
-//          [mbOK]
-//          );
-//        LoginFrm.Close;
-//        Application.Terminate;
-//        Exit;
-//      end;
-//      edtPassword.Clear;
-//      try
-//        edtPassword.SetFocus;
-//      except
-//      end;
-//    end;
+    if not LoginToDB(edtUserName.Text, edtPassword.Text) then
+    begin
+      Beep;
+      if LoginAttempt = 1 then
+      begin
+        DisplayMsg(
+          FAppTitle,
+          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+          'Invalid username and/or password. Please note that passwords are case sensitive. ' +
+          'Please ensure that your caps lock key is in the correct state and try again.',
+          mtWarning,
+          [mbOK]
+          );
+        Exit;
+      end
 
-    RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
+      else if FLoginAttempt = 2 then
+      begin
+        edtPassword.Clear;
+        try
+          edtPassword.SetFocus;
+        except
+        end;
+        DisplayMsg(
+          FAppTitle,
+          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+          'Invalid username and/or password. ' +
+          'You have made two unsuccessfull attempts at logging in. ' +
+          'Please ensure that your caps lock key is in the correct state and try again.',
+          mtWarning,
+          [mbOK]
+          );
+        Exit;
+      end
+
+      else if FLoginAttempt >= 3 then
+      begin
+        edtPassword.Clear;
+        try
+          edtPassword.SetFocus;
+        except
+        end;
+        DisplayMsg(
+          FAppTitle,
+          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+          'This is your third unsuccessfull attempt at logging in. ' +
+          'VB Shell cannot log you in and will now terminate.',
+          mtWarning,
+          [mbOK]
+          );
+        LoginFrm.Close;
+        Application.Terminate;
+        Exit;
+      end;
+      edtPassword.Clear;
+      try
+        edtPassword.SetFocus;
+      except
+      end;
+    end;
+
+//    RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
     RegKey.RootKey := HKEY_CURRENT_USER;
     RegKey.OpenKey(KEY_USER_DATA, True);
+    RegKey.WriteInteger('User ID', VBBaseDM.FUserData.UserID);
     RegKey.WriteString('User Name', edtUserName.Text);
+    RegKey.WriteString('First Name', VBBaseDM.FUserData.FirstName);
+    RegKey.WriteString('Last Name', VBBaseDM.FUserData.LastName);
+    RegKey.WriteString('Email Address', VBBaseDM.FUserData.EmailAddress);
+    RegKey.WriteBool('Account Enabled', VBBaseDM.FUserData.AccountEnabled);
     RegKey.CloseKey;
-
-//    GetUserData(StrToInt(SL.Values['ID']), SL.Values['USER_NAME']);
-
-//    if MainFrm = nil then
-//    begin
-//      Screen.Cursor := crHourGlass;
-//      Application.ProcessMessages;
-//      LoginFrm.Hide;
-//      Application.CreateForm(TMainFrm, MainFrm);
-//    end;
-//    LoginFrm.Close;
-//    Application.ShowMainForm := True;
-//  finally
-//    SL.Free;
-//    RegKey.Free;
-//  end;
 
     if MainFrm = nil then
     begin
@@ -370,7 +363,6 @@ begin
     LoginFrm.Close;
     Application.ShowMainForm := True;
   finally
-//    SL.Free;
     RegKey.Free;
   end;
 end;

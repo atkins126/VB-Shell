@@ -12,7 +12,6 @@ inherited LoginFrm: TLoginFrm
   inherited layMain: TdxLayoutControl
     Width = 505
     Height = 195
-    LayoutLookAndFeel = lafCustomSkin
     ExplicitWidth = 505
     ExplicitHeight = 195
     object lblTitle: TcxLabel [0]
@@ -1722,15 +1721,15 @@ inherited LoginFrm: TLoginFrm
     end
     object spc1: TdxLayoutEmptySpaceItem
       Parent = grpLogo
-      CaptionOptions.Text = 'Empty Space Item'
       SizeOptions.Height = 10
       SizeOptions.Width = 10
+      CaptionOptions.Text = 'Empty Space Item'
       Index = 1
     end
     object spc2: TdxLayoutEmptySpaceItem
-      CaptionOptions.Text = 'Empty Space Item'
       SizeOptions.Height = 10
       SizeOptions.Width = 10
+      CaptionOptions.Text = 'Empty Space Item'
       Index = -1
     end
     object sep1: TdxLayoutSeparatorItem

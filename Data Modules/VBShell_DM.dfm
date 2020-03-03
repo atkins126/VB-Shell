@@ -1,6 +1,7 @@
 inherited VBShellDM: TVBShellDM
   object cdsSystemUser: TFDMemTable
     ActiveStoredUsage = [auDesignTime]
+    FilterOptions = [foCaseInsensitive]
     CachedUpdates = True
     FetchOptions.AssignedValues = [evMode, evRecordCountMode]
     FetchOptions.Mode = fmAll
@@ -67,6 +68,34 @@ inherited VBShellDM: TVBShellDM
   object dtsSystemUser: TDataSource
     DataSet = cdsSystemUser
     Left = 120
+    Top = 60
+  end
+  object cdsDBInfo: TFDMemTable
+    ActiveStoredUsage = [auDesignTime]
+    FilterOptions = [foCaseInsensitive]
+    CachedUpdates = True
+    ConstraintsEnabled = True
+    FetchOptions.AssignedValues = [evMode, evRecordCountMode]
+    FetchOptions.Mode = fmAll
+    FetchOptions.RecordCountMode = cmTotal
+    FormatOptions.AssignedValues = [fvDataSnapCompatibility]
+    FormatOptions.DataSnapCompatibility = True
+    ResourceOptions.AssignedValues = [rvSilentMode, rvStorePrettyPrint]
+    ResourceOptions.StorePrettyPrint = True
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    UpdateOptions.UpdateTableName = 'DB_INFO'
+    Left = 200
+    Top = 10
+    object cdsDBInfoDB_VERSION: TIntegerField
+      DisplayLabel = 'DB Version'
+      FieldName = 'DB_VERSION'
+    end
+  end
+  object dtsDBInfo: TDataSource
+    Left = 200
     Top = 60
   end
 end
