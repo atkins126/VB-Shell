@@ -91,7 +91,8 @@
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
         <VerInfo_Release>1</VerInfo_Release>
         <VerInfo_Build>2</VerInfo_Build>
-        <VerInfo_Keys>CompanyName=van Brakel and Associates;FileDescription=VB Shell;FileVersion=1.1.1.2;InternalName=VBShell.exe;LegalCopyright=Express Talent;LegalTrademarks=Delphi 10.3.1 (Rio);OriginalFilename=VBShell.exe;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=VB Shell;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=van Brakel and Associates;FileDescription=VB Shell;FileVersion=2.1.1.2;InternalName=VBShell.exe;LegalCopyright=Express Talent;LegalTrademarks=Delphi 10.3.1 (Rio);OriginalFilename=VBShell.exe;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=VB Shell;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_MajorVer>2</VerInfo_MajorVer>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
