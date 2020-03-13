@@ -27,6 +27,7 @@ type
     cdsDBInfo: TFDMemTable;
     dtsDBInfo: TDataSource;
     cdsDBInfoDB_VERSION: TIntegerField;
+    cdsSystemUserCHANGE_PW_NEXT_LOGIN: TIntegerField;
   private
     { Private declarations }
   public

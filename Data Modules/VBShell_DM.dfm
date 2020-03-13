@@ -64,6 +64,12 @@ inherited VBShellDM: TVBShellDM
       Origin = 'ACCOUNT_ENABLED'
       Required = True
     end
+    object cdsSystemUserCHANGE_PW_NEXT_LOGIN: TIntegerField
+      Alignment = taLeftJustify
+      DisplayLabel = 'PW'
+      FieldName = 'CHANGE_PW_NEXT_LOGIN'
+      Origin = 'CHANGE_PW_NEXT_LOGIN'
+    end
   end
   object dtsSystemUser: TDataSource
     DataSet = cdsSystemUser

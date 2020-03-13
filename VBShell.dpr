@@ -28,13 +28,14 @@ uses
   BaseLayout_Frm in '..\..\..\..\Lib\BaseLayout_Frm.pas' {BaseLayoutFrm},
   CommonValues in '..\..\..\..\Lib\CommonValues.pas',
   JobsApi in '..\..\..\..\Lib\JobsApi.pas',
-  CommonFunction in '..\..\..\..\Lib\CommonFunction.pas',
+  CommonFunctions in '..\..\..\..\Lib\CommonFunctions.pas',
   Login_Frm in 'General\Login_Frm.pas' {LoginFrm},
   ED in '..\..\..\..\Lib\ED.pas',
   USingleInst in '..\..\..\..\Lib\USingleInst.pas',
   UMySingleInst in 'General\UMySingleInst.pas',
   RUtils in '..\..\..\..\Lib\RUtils.pas',
-  Progress_Frm in '..\..\..\..\Lib\Progress_Frm.pas' {ProgressFrm};
+  Progress_Frm in '..\..\..\..\Lib\Progress_Frm.pas' {ProgressFrm},
+  ChangePassword_Frm in 'General\ChangePassword_Frm.pas' {ChangePasswordFrm};
 
 {$R *.res}
 

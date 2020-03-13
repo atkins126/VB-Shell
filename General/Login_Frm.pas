@@ -89,7 +89,7 @@ uses
   VBCommonValues,
   RUtils,
   CommonMethods,
-  CommonFunction,
+  CommonFunctions,
   Main_Frm,
   ED, CommonValues, USingleInst;
 

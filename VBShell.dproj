@@ -142,7 +142,7 @@
         </DCCReference>
         <DCCReference Include="..\..\..\..\Lib\CommonValues.pas"/>
         <DCCReference Include="..\..\..\..\Lib\JobsApi.pas"/>
-        <DCCReference Include="..\..\..\..\Lib\CommonFunction.pas"/>
+        <DCCReference Include="..\..\..\..\Lib\CommonFunctions.pas"/>
         <DCCReference Include="General\Login_Frm.pas">
             <Form>LoginFrm</Form>
         </DCCReference>
@@ -152,6 +152,10 @@
         <DCCReference Include="..\..\..\..\Lib\RUtils.pas"/>
         <DCCReference Include="..\..\..\..\Lib\Progress_Frm.pas">
             <Form>ProgressFrm</Form>
+        </DCCReference>
+        <DCCReference Include="General\ChangePassword_Frm.pas">
+            <Form>ChangePasswordFrm</Form>
+            <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

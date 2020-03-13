@@ -47,6 +47,8 @@ type
     btnUserManager: TdxBarLargeButton;
     actMasterTableManager: TAction;
     actUserManager: TAction;
+    btnChangePassword: TdxBarLargeButton;
+    actChangePassword: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure DoExitApp(Sender: TObject);
@@ -57,6 +59,7 @@ type
     procedure pagAppsDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pagAppsStartDrag(Sender: TObject; var DragObject: TDragObject);
     procedure FormResize(Sender: TObject);
+    procedure DoChangePassword(Sender: TObject);
 
     procedure pagAppsDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -75,6 +78,7 @@ type
     procedure WndProc(var MyMsg: TMessage); override;
     procedure WMCopyData(var Msg: TWMCopyData); message WM_COPYDATA;
     procedure HandleIncomingMessage(DataStructure: PCopyDataStruct; Msg: TWMCopyData);
+    function GetPassword(PW: string): string;
 
 //    procedure HandleParam(const Param: string);
 //    procedure CreateParams(var Params: TCreateParams); override;
@@ -95,7 +99,26 @@ uses
   MsgDialog_Frm,
   CommonMethods,
   VBCommonValues,
-  VBBase_DM, CommonFunction, USingleInst;
+  VBBase_DM,
+  CommonFunctions,
+  USingleInst,
+  ChangePassword_Frm,
+  ED;
+
+procedure TMainFrm.DoChangePassword(Sender: TObject);
+begin
+  inherited;
+  if ChangePasswordFrm = nil then
+    ChangePasswordFrm := TChangePasswordFrm.Create(nil);
+
+  ChangePasswordFrm.CurrentPassword :=
+    GetPassword(VBBaseDM.FUserData.PW);
+//    GetPassword(VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString);
+
+  ChangePasswordFrm.ShowModal;
+  ChangePasswordFrm.Close;
+  FreeAndNil(ChangePasswordFrm);
+end;
 
 procedure TMainFrm.DoExitApp(Sender: TObject);
 begin
@@ -278,6 +301,20 @@ begin
 
 //  ribMain.ShowTabGroups := True;
   WindowState := wsMaximized;
+end;
+
+function TMainFrm.GetPassword(PW: string): string;
+var
+  ED: TED;
+begin
+  Result := '';
+  ED := TED.Create(EKEY1, EKEY2);
+
+  try
+    Result := ED.DCString(PW);
+  finally
+    ED.Free;
+  end;
 end;
 
 procedure TMainFrm.DoLaunchApplication(Sender: TObject);
