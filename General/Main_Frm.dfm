@@ -116,7 +116,7 @@ inherited MainFrm: TMainFrm
     end
     object actChangePassword: TAction
       Category = 'Application'
-      Caption = 'Change Password'
+      Caption = 'Change My Password'
       ImageIndex = 9
       OnExecute = DoChangePassword
     end

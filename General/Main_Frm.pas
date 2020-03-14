@@ -105,32 +105,6 @@ uses
   ChangePassword_Frm,
   ED;
 
-procedure TMainFrm.DoChangePassword(Sender: TObject);
-begin
-  inherited;
-  if ChangePasswordFrm = nil then
-    ChangePasswordFrm := TChangePasswordFrm.Create(nil);
-
-  ChangePasswordFrm.CurrentPassword :=
-    GetPassword(VBBaseDM.FUserData.PW);
-//    GetPassword(VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString);
-
-  ChangePasswordFrm.ShowModal;
-  ChangePasswordFrm.Close;
-  FreeAndNil(ChangePasswordFrm);
-end;
-
-procedure TMainFrm.DoExitApp(Sender: TObject);
-begin
-  inherited;
-  sknController.SkinName := '';
-
-  if MsgDialogFrm <> nil then
-    FreeAndNil(MsgDialogFrm);
-
-  MainFrm.Close;
-end;
-
 procedure TMainFrm.FormCreate(Sender: TObject);
 var
   RegKey: TRegistry;
@@ -144,9 +118,12 @@ begin
   Application.HintShortPause := 0;
   FAppTitle := Application.Title;
   VBShellDM.ShellResource := VBBaseDM.GetShellResource;
+  Caption := FAppTitle;
   dxBarMakeInactiveImagesDingy := False;
   FSwitchPrefix := ['/'];
   pagApps.ShowFrame := False;
+  pagApps.HideTabs := True;
+  pagApps.ShowHint := True;
 
   if MsgDialogFrm = nil then
     MsgDialogFrm := TMsgDialogFrm.Create(nil);
@@ -154,6 +131,7 @@ begin
   if VBShellDM = nil then
     VBShellDM := TVBShellDM.Create(nil);
 
+  VBBaseDM.UserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
   VBShellDM.cdsSystemUser.Close;
 //  ProcessRegistry;
   // StringList to maintain current user rights.
@@ -182,10 +160,6 @@ begin
       RUtils.GetBuildInfo(Application.ExeName, rbLongFormat);
   end;
 
-  Caption := FAppTitle;
-  pagApps.HideTabs := True;
-  pagApps.ShowHint := True;
-  pagApps.ShowFrame := False;
   // Set the app counter to zero. This property maintains a count of all apps
   // that are launched/terminated. This sets the FApp array length.
 //  FAppCount := 0;
@@ -223,7 +197,8 @@ begin
     VBBaseDM.Client := TVBServerMethodsClient.Create(VBBaseDM.sqlConnection.DBXConnection);
 
     // Connect to predefined LEAVE port. See BASE_FRM for list of port no contants.
-    sbrMain.Panels[1].Text := 'User: ' + VBBaseDM.FUserData.UserName;
+    VBBaseDM.PopulateUserData;
+    sbrMain.Panels[1].Text := 'User: ' + VBBaseDM.UserData.UserName;
 
     // Check for first time access to RC Shell. If first time access then get
     // user to login.
@@ -242,6 +217,55 @@ begin
     if RegKey <> nil then
       RegKey.Free;
   end;
+end;
+
+procedure TMainFrm.DoChangePassword(Sender: TObject);
+begin
+  inherited;
+  if ChangePasswordFrm = nil then
+    ChangePasswordFrm := TChangePasswordFrm.Create(nil);
+
+//  if Length(Trim(PW)) = 0 then
+//    raise EValidateException.Create('Cannot find data for current user');
+
+  ChangePasswordFrm.CurrentPassword :=
+    GetPassword(VBBaseDM.UserData.PW);
+//  GetPassword(VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString);
+
+  ChangePasswordFrm.ShowModal;
+  ChangePasswordFrm.Close;
+  FreeAndNil(ChangePasswordFrm);
+end;
+
+procedure TMainFrm.DoExitApp(Sender: TObject);
+begin
+  inherited;
+  sknController.SkinName := '';
+
+  if MsgDialogFrm <> nil then
+    FreeAndNil(MsgDialogFrm);
+
+  MainFrm.Close;
+end;
+
+procedure TMainFrm.FormShow(Sender: TObject);
+begin
+  inherited;
+//  styContent.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentColor;
+//  styContent.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
+//  styEven.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentEvenColor;
+//  styEven.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
+//  styOdd.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentOddColor;
+//  styOdd.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
+//  styInactive.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultHeaderBackgroundColor;
+//  styInactive.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionTextColor;
+//  styGroup.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultGroupColor;
+//  styGroup.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultGroupTextColor;
+//  styEditControllerReadOnly.Style.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
+//  scrMain.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentColor;
+
+//  ribMain.ShowTabGroups := True;
+  WindowState := wsMaximized;
 end;
 
 procedure TMainFrm.FormResize(Sender: TObject);
@@ -281,26 +305,6 @@ begin
       pagApps.ActivePage.Visible := True;
       pagApps.ShowFrame := False;
     end;
-end;
-
-procedure TMainFrm.FormShow(Sender: TObject);
-begin
-  inherited;
-//  styContent.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentColor;
-//  styContent.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
-//  styEven.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentEvenColor;
-//  styEven.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
-//  styOdd.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentOddColor;
-//  styOdd.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
-//  styInactive.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultHeaderBackgroundColor;
-//  styInactive.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionTextColor;
-//  styGroup.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultGroupColor;
-//  styGroup.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultGroupTextColor;
-//  styEditControllerReadOnly.Style.TextColor := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultSelectionColor;
-//  scrMain.Color := cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentColor;
-
-//  ribMain.ShowTabGroups := True;
-  WindowState := wsMaximized;
 end;
 
 function TMainFrm.GetPassword(PW: string): string;

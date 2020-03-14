@@ -95,9 +95,8 @@ uses
 
 procedure TLoginFrm.FormCreate(Sender: TObject);
 var
-  ErrorMsg, UserName: string;
   RegKey: TRegistry;
-  SkinResourceFileName, SkinName: string;
+  ErrorMsg, SkinResourceFileName, SkinName: string;
 //  RootFolder, RootDataFolder, OldRootFolder: string;
 //  I: Integer;
 begin
@@ -110,12 +109,13 @@ begin
   pnlUnderline.Style.BorderStyle := ebsNone;
   litLogo.Image.Transparent := True;
   FLoginAttempt := 0;
+  FAppTitle :=  Application.Title;
   RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
   RegKey.RootKey := HKEY_CURRENT_USER;
   RegKey.OpenKey(KEY_USER_DATA, True);
 
   try
-{$IFDEF DEBUG}
+    {$IFDEF DEBUG}
     ErrorMsg := '';
     if not LocalDSServerIsRunning(LOCAL_VB_SHELL_DS_SERVER, ErrorMsg) then
     begin
@@ -124,8 +124,8 @@ begin
 
       Beep;
       DisplayMsg(
-        Application.Title,
-        Application.Title + ' - Datasnap Server Connection Error',
+        FAppTitle,
+        'Datasnap Server Connection Error',
         'Could not establish a connection to the requested Datasnap server.' + CRLF + CRLF +
         ErrorMsg
         + CRLF + CRLF + 'Please ensure that the local ' + Application.Title + ' Datasnap '
@@ -134,7 +134,7 @@ begin
         [mbOK]
         );
     end;
-{$ENDIF}
+    {$ENDIF}
 
     if VBBaseDM = nil then
       VBBaseDM := TVBBaseDM.Create(nil);
@@ -159,31 +159,36 @@ begin
 //      RUtils.GetBuildInfo(Application.ExeName, rbLongFormat) + ' - ' +
 //      verInfo.StringFileInfo['LegalTrademarks'];
 
-    sbrMain.Panels[0].Text := 'VB Apps Ver: ' +
+    sbrMain.Panels[0].Text := 'VB Shell Ver: ' +
       RUtils.GetBuildInfo(Application.ExeName, rbLongFormat);
 
     btnLogin.Default := True;
     lucSystemUser.Properties.ListSource := VBShellDM.dtsSystemUser;
-    UserName := '';
     VBShellDM.cdsSystemUser.Close;
 
     VBBaseDM.GetData(33, VBShellDM.cdsDBInfo, VBShellDM.cdsDBInfo.Name, ONE_SPACE,
       'C:\Data\Xml\DB Info.xml', VBShellDM.cdsDBInfo.UpdateOptions.Generatorname,
       VBShellDM.cdsDBInfo.UpdateOptions.UpdateTableName);
 
-    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, ONE_SPACE,
-      'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
-      VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
+//    WhereClause := ' WHERE U.LOGIN_NAME = ' +
+//
+//    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, ONE_SPACE,
+//      'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
+//      VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
 
-    if RegKey.ValueExists('Login Name') then
-    begin
-      if Length(Trim(RegKey.ReadString('Login Name'))) > 0 then
-      begin
-        UserName := Trim(RegKey.ReadString('Login Name'));
-        VBShellDM.cdsSystemUser.Locate('LOGIN_NAME', UserName, [loCaseInsensitive]);
-        lucSystemUser.Text := UserName;
-      end;
-    end;
+//ORDER BY
+// U.FIRST_NAME,
+// U.LAST_NAME
+
+//    if RegKey.ValueExists('Login Name') then
+//    begin
+//      if Length(Trim(RegKey.ReadString('Login Name'))) > 0 then
+//      begin
+//        UserName := Trim(RegKey.ReadString('Login Name'));
+//        VBShellDM.cdsSystemUser.Locate('LOGIN_NAME', UserName, [loCaseInsensitive]);
+//        lucSystemUser.Text := UserName;
+//      end;
+//    end;
 
     if RegKey.ValueExists('Login Name') then
     begin
@@ -238,22 +243,32 @@ end;
 function TLoginFrm.LoginToDB(UserName, Password: string): Boolean;
 var
   ED: TED;
-  PW: string;
+  PW, WhereClause: string;
 begin
-  Result := True;
+  Result := False;
+  WhereClause :=
+    ' WHERE UPPER(U.LOGIN_NAME) = ' + AnsiQuotedStr(AnsiUpperCase(Trim(edtUserName.Text)), '''');
 
-  if VBShellDM.cdsDBInfo.FieldByName('DB_VERSION').Asinteger > 13 then
-  begin
-    ED := TED.Create(EKEY1, EKEY2);
-    try
-      PW := ED.DCString(VBBaseDM.FUserData.PW);
-    finally
-      ED.Free;
-    end;
+  VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, WhereClause,
+    'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
+    VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
 
-    Result := SameText(UserName, VBBaseDM.FUserData.UserName)
-      and SameStr(Password, PW);
+  if VBShellDM.cdsSystemUser.IsEmpty then
+    raise ELoginCredentialError.Create('Invalid user name and/or password.');
+
+//  if VBShellDM.cdsDBInfo.FieldByName('DB_VERSION').Asinteger > 12 then
+//  begin
+  ED := TED.Create(EKEY1, EKEY2);
+  try
+    PW := ED.DCString(VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString);
+//    PW := ED.DCString(VBBaseDM.UserData.PW);
+  finally
+    ED.Free;
   end;
+
+  Result := SameText(UserName, VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString)
+    and SameStr(Password, PW);
+//  end;
 end;
 
 procedure TLoginFrm.DoCancelLogin(Sender: TObject);
@@ -267,89 +282,94 @@ var
   RegKey: TRegistry;
 begin
   inherited;
-  VBBaseDM.FUserData.UserID := VBShellDM.cdsSystemUser.FieldByName('ID').AsInteger;
-  VBBaseDM.FUserData.UserName := VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString;
-  VBBaseDM.FUserData.FirstName := VBShellDM.cdsSystemUser.FieldByName('FIRST_NAME').AsString;
-  VBBaseDM.FUserData.LastName := VBShellDM.cdsSystemUser.FieldByName('LAST_NAME').AsString;
-  VBBaseDM.FUserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
-  VBBaseDM.FUserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
-  VBBaseDM.FUserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
-  RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
+//  VBBaseDM.UserData.UserID := VBShellDM.cdsSystemUser.FieldByName('ID').AsInteger;
+//  VBBaseDM.UserData.UserName := VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString;
+//  VBBaseDM.UserData.FirstName := VBShellDM.cdsSystemUser.FieldByName('FIRST_NAME').AsString;
+//  VBBaseDM.UserData.LastName := VBShellDM.cdsSystemUser.FieldByName('LAST_NAME').AsString;
+//  VBBaseDM.UserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
+//  VBBaseDM.UserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
+//  VBBaseDM.UserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
 
-  try
-    // Use the user's Windows credentials to login to system.
-    // Use this method to login via local machine
-    Inc(FLoginAttempt);
-    if not LoginToDB(edtUserName.Text, edtPassword.Text) then
+  Inc(FLoginAttempt);
+  if not LoginToDB(edtUserName.Text, edtPassword.Text) then
+  begin
+    Beep;
+    if LoginAttempt = 1 then
     begin
-      Beep;
-      if LoginAttempt = 1 then
-      begin
-        DisplayMsg(
-          FAppTitle,
-          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-          'Invalid username and/or password. Please note that passwords are case sensitive. ' +
-          'Please ensure that your caps lock key is in the correct state and try again.',
-          mtWarning,
-          [mbOK]
-          );
-        Exit;
-      end
+      DisplayMsg(
+        FAppTitle,
+        'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+        'Invalid username and/or password. Please note that passwords are case sensitive. ' +
+        'Please ensure that your caps lock key is in the correct state and try again.',
+        mtWarning,
+        [mbOK]
+        );
+      Exit;
+    end
 
-      else if FLoginAttempt = 2 then
-      begin
-        edtPassword.Clear;
-        try
-          edtPassword.SetFocus;
-        except
-        end;
-        DisplayMsg(
-          FAppTitle,
-          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-          'Invalid username and/or password. ' +
-          'You have made two unsuccessfull attempts at logging in. ' +
-          'Please ensure that your caps lock key is in the correct state and try again.',
-          mtWarning,
-          [mbOK]
-          );
-        Exit;
-      end
-
-      else if FLoginAttempt >= 3 then
-      begin
-        edtPassword.Clear;
-        try
-          edtPassword.SetFocus;
-        except
-        end;
-        DisplayMsg(
-          FAppTitle,
-          'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
-          'This is your third unsuccessfull attempt at logging in. ' +
-          'VB Shell cannot log you in and will now terminate.',
-          mtWarning,
-          [mbOK]
-          );
-        LoginFrm.Close;
-        Application.Terminate;
-        Exit;
-      end;
+    else if FLoginAttempt = 2 then
+    begin
       edtPassword.Clear;
       try
         edtPassword.SetFocus;
       except
       end;
-    end;
+      DisplayMsg(
+        FAppTitle,
+        'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+        'Invalid username and/or password. ' +
+        'You have made two unsuccessfull attempts at logging in. ' +
+        'Please ensure that your caps lock key is in the correct state and try again.',
+        mtWarning,
+        [mbOK]
+        );
+      Exit;
+    end
 
-//    RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
+    else if FLoginAttempt >= 3 then
+    begin
+      edtPassword.Clear;
+      try
+        edtPassword.SetFocus;
+      except
+      end;
+      DisplayMsg(
+        FAppTitle,
+        'Invalid Login Validation Attempt: ' + FLoginAttempt.ToString,
+        'This is your third unsuccessfull attempt at logging in. ' +
+        'VB Shell cannot log you in and will now terminate.',
+        mtWarning,
+        [mbOK]
+        );
+      LoginFrm.Close;
+      Application.Terminate;
+      Exit;
+    end;
+    edtPassword.Clear;
+    try
+      edtPassword.SetFocus;
+    except
+    end;
+  end;
+
+  RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
+  try
+    VBBaseDM.UserData.UserID := VBShellDM.cdsSystemUser.FieldByName('ID').AsInteger;
+    VBBaseDM.UserData.UserName := VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString;
+    VBBaseDM.UserData.FirstName := VBShellDM.cdsSystemUser.FieldByName('FIRST_NAME').AsString;
+    VBBaseDM.UserData.LastName := VBShellDM.cdsSystemUser.FieldByName('LAST_NAME').AsString;
+    VBBaseDM.UserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
+    VBBaseDM.UserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
+    VBBaseDM.UserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
+
     RegKey.RootKey := HKEY_CURRENT_USER;
     RegKey.OpenKey(KEY_USER_DATA, True);
-    RegKey.WriteInteger('User ID', VBBaseDM.FUserData.UserID);
-    RegKey.WriteString('User Name', edtUserName.Text);
-    RegKey.WriteString('First Name', VBBaseDM.FUserData.FirstName);
-    RegKey.WriteString('Last Name', VBBaseDM.FUserData.LastName);
-    RegKey.WriteString('Email Address', VBBaseDM.FUserData.EmailAddress);
-    RegKey.WriteBool('Account Enabled', VBBaseDM.FUserData.AccountEnabled);
+    RegKey.WriteInteger('User ID', VBBaseDM.UserData.UserID);
+    RegKey.WriteString('Login Name', edtUserName.Text);
+    RegKey.WriteString('First Name', VBBaseDM.UserData.FirstName);
+    RegKey.WriteString('Last Name', VBBaseDM.UserData.LastName);
+    RegKey.WriteString('Email Address', VBBaseDM.UserData.EmailAddress);
+    RegKey.WriteBool('Account Enabled', VBBaseDM.UserData.AccountEnabled);
     RegKey.CloseKey;
 
     if MainFrm = nil then
