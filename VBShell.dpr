@@ -42,10 +42,9 @@ uses
 var
   { LaunchDrive, }AppFileName, AppFolder, TempFolder: string;
   FoundNewVersion, ReleaseVersion: Boolean;
-  ErrorMsg: string;
   AppHandle: HWND;
-// InstanceClass: TComponentClass;
-// FormReference: TForm;
+  // InstanceClass: TComponentClass;
+  // FormReference: TForm;
 
 const
   APP_NAME = 'VBShell.exe';
@@ -66,13 +65,16 @@ var
   aYear, aMonth, aDay, aHour, aMin, aSec, aMSec: Word;
   TheDate: Double;
   RegKey: TRegistry;
-// StartInfo: TStartupInfo;
-// ProcInfo: TProcessInformation;
-// Success: Boolean;
+{$IFDEF DEBUG}
+  ErrorMsg: string;
+{$ENDIF}
+  // StartInfo: TStartupInfo;
+  // ProcInfo: TProcessInformation;
+  // Success: Boolean;
 begin
   try
     Application.Title := APP_TITLE;
-    {$IFDEF DEBUG}
+{$IFDEF DEBUG}
     ErrorMsg := '';
     if not LocalDSServerIsRunning(LOCAL_VB_SHELL_DS_SERVER, ErrorMsg) then
     begin
@@ -88,11 +90,11 @@ begin
         [mbOK]
         );
     end;
-    {$ENDIF}
+{$ENDIF}
     ReleaseVersion := True;
-    {$IFDEF DEBUG}
+{$IFDEF DEBUG}
     ReleaseVersion := False;
-    {$ENDIF}
+{$ENDIF}
     if VBBaseDM = nil then
       VBBaseDM := TVBBaseDM.Create(nil);
 
@@ -114,13 +116,14 @@ begin
       FoundNewVersion := False;
       RegKey.OpenKey(KEY_COMMON, True);
 
-      {$IFDEF DEBUG}
+{$IFDEF DEBUG}
       AppFolder := RegKey.ReadString('App Folder');
-      {$ELSE}
+{$ELSE}
       AppFolder := ExtractFilePath(Application.ExeName);
-      {$ENDIF}
+{$ENDIF}
+//      AppFolder := ExtractFilePath(Application.ExeName);
       RegKey.CloseKey;
-// RegKey.OpenKey(KEY_RESOURCE, True);
+      // RegKey.OpenKey(KEY_RESOURCE, True);
       TempFolder := AppFolder + 'Temp\';
       TDirectory.CreateDirectory(TempFolder);
       AppFileName := AppFolder + APP_NAME;
@@ -179,11 +182,11 @@ begin
                 if CycleCounter = 100 then
                 begin
                   Progress := StrToFloat(TotalBytesRead.ToString) / StrToFloat(StreamSize.ToString) * 100;
-// DownloadCaption := 'CAPTION=';
+                  // DownloadCaption := 'CAPTION=';
                   SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_PROGRESS, DWORD(PChar(FloatToStr(Progress))), 0);
                   Application.ProcessMessages;
                   CycleCounter := 0;
-// Application.ProcessMessages;
+                  // Application.ProcessMessages;
                 end;
                 Inc(CycleCounter)
               end;
@@ -194,8 +197,8 @@ begin
           SendMessage(ProgressFrm.Handle, WM_DOWNLOAD_CAPTION, DWORD(PChar(DownloadCaption)), 0);
           Application.ProcessMessages;
 
-// Download complete -----------------------------------------------------------
-          // Save the File
+          // Download complete -----------------------------------------------------------
+                    // Save the File
           MemStream.SaveToFile(TempFolder + APP_NAME);
         finally
           MemStream.Free;
@@ -257,7 +260,7 @@ begin
         // The Application.Terminate does not always re-launch RC shell.
         { TODO: Must investigate this issue and get it to work properly }
         Halt;
-// Application.Terminate;
+        // Application.Terminate;
       end;
     finally
       SL.Free;
@@ -270,11 +273,11 @@ begin
 end;
 
 begin
-// {$IFDEF RELEASE}
+  // {$IFDEF RELEASE}
   CheckForUpdates;
-// {$ENDIF}
+  // {$ENDIF}
 
-// CreateMutex(nil, False, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
+  // CreateMutex(nil, False, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
   CreateMutex(nil, True, '{C895DC7C-AC30-4DF1-883B-F7A1B6CB274D}');
   if GetLastError = ERROR_ALREADY_EXISTS then
   begin
@@ -297,8 +300,8 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   LoginFrm := TLoginFrm.Create(Application);
-// InstanceClass := TMainFrm;
-// FormReference := MainFrm;
+  // InstanceClass := TMainFrm;
+  // FormReference := MainFrm;
   LoginFrm.Update;
   LoginFrm.ShowModal;
   Application.Run;

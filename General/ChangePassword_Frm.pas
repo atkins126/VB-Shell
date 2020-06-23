@@ -122,7 +122,7 @@ begin
   end;
 
   edtCurrentPassword.Clear;
-  Response := RUtils.CreateStringList(PIPE, SINGLE_QUOTE);
+  Response := RUtils.CreateStringList(PIPE, DOUBLE_QUOTE);
   ED := TED.Create(EKEY1, EKEY2);
   try
     NewPW := ED.ECString(edtNewPassword.Text);

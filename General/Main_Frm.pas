@@ -49,6 +49,7 @@ type
     actUserManager: TAction;
     btnChangePassword: TdxBarLargeButton;
     actChangePassword: TAction;
+    btnSendMessage: TdxBarLargeButton;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure DoExitApp(Sender: TObject);
@@ -63,15 +64,18 @@ type
 
     procedure pagAppsDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
+    procedure btnSendMessageClick(Sender: TObject);
   private
     { Private declarations }
     FJobH: THandle;
 //    FAppCount: Integer;
     FReady: Boolean;
+    FSkinResourceFileName: string;
 
 //    property JobH: THandle read FJobH write FJobH;
 //    property AppCount: Integer read FAppCount write FAppCount;
 //    property Ready: Boolean read FReady write FReady;
+    procedure UpdateApplicationSkin(SkinResourceFileName {, SkinName}: string);
   public
     { Public declarations }
   protected
@@ -110,8 +114,8 @@ var
   RegKey: TRegistry;
 //  ValidUserCredentials: Boolean;
   JobLimit: TJobObjectExtendedLimitInformation;
-  //I: Integer;
   ErrorMsg: string;
+  //I: Integer;
 begin
   inherited;
   Application.HintPause := 0;
@@ -195,6 +199,8 @@ begin
     VBBaseDM.SetConnectionProperties;
     VBBaseDM.sqlConnection.Open;
     VBBaseDM.Client := TVBServerMethodsClient.Create(VBBaseDM.sqlConnection.DBXConnection);
+    FSkinResourceFileName := RESOURCE_FOLDER + SKIN_RESOURCE_FILE;
+    UpdateApplicationSkin(FSkinResourceFileName {, SkinName});
 
     // Connect to predefined LEAVE port. See BASE_FRM for list of port no contants.
     VBBaseDM.PopulateUserData;
@@ -217,6 +223,23 @@ begin
     if RegKey <> nil then
       RegKey.Free;
   end;
+end;
+
+procedure TMainFrm.btnSendMessageClick(Sender: TObject);
+begin
+  inherited;
+  UpdateApplicationSkin(FSkinResourceFileName {, SkinName});
+
+  if ProcessIsRunning('MasterTableManager.exe') then
+    SendMessageToApp('Master Table Manager', '1');
+
+  if ProcessIsRunning('TimesheetManager.exe') then
+    SendMessageToApp('Timesheet Manager', '1');
+
+//  if not SendMessageToApp('Master Table Manager', '1') then
+//  begin
+//    raise ELaunchException.Create('Host application: Master Table Manager not found!');
+//  end;
 end;
 
 procedure TMainFrm.DoChangePassword(Sender: TObject);
@@ -635,6 +658,39 @@ begin
   TmyDragObject(DragObject).Tab := TcxPageControl(Sender).ActivePage;
 end;
 
+procedure TMainFrm.UpdateApplicationSkin(SkinResourceFileName: string);
+var
+  SkinName: string;
+begin
+  SkinName := VBBaseDM.GetSkinFromRegistry;
+
+//  if Length(Trim(SkinName)) = 0 then
+//    SkinName := DEFAULT_SKIN_NAME;
+
+  sknController.BeginUpdate;
+  try
+    sknController.NativeStyle := False;
+    sknController.UseSkins := True;
+    if dxSkinsUserSkinLoadFromFile(SkinResourceFileName, SkinName) then
+    begin
+      sknController.SkinName := 'UserSkin';
+      RootLookAndFeel.SkinName := 'UserSkin';
+      barManager.LookAndFeel.SkinName := 'UserSkin';
+      lafCustomSkin.LookAndFeel.SkinName := 'UserSkin';
+    end
+    else
+    begin
+      sknController.SkinName := DEFAULT_SKIN_NAME;
+      RootLookAndFeel.SkinName := DEFAULT_SKIN_NAME;
+      barManager.LookAndFeel.SkinName := DEFAULT_SKIN_NAME;
+      lafCustomSkin.LookAndFeel.SkinName := DEFAULT_SKIN_NAME;
+    end;
+  finally
+    sknController.Refresh;
+    sknController.EndUpdate;
+  end;
+end;
+
 procedure TMainFrm.WndProc(var MyMsg: TMessage);
 begin
   inherited;
@@ -703,7 +759,7 @@ begin
         repeat
           // Keep polling until the client app has been destroyed.
           AppH := Findwindow(nil, PWideChar(pagApps.Pages[I].TabHint))
-        until (AppH = 0) or ((GetTickCount - FirstTickCount) >= 10000);
+        until (AppH = 0) or ((Integer(GetTickCount) - FirstTickCount) >= 10000);
         // Once the client app can no longer be found, destroy the container tab.
         if Assigned(pagApps.Pages[I]) then
           pagApps.Pages[I].Free;

@@ -55,7 +55,7 @@ type
     styHintController: TcxHintStyleController;
     lucSystemUser: TcxLookupComboBox;
     sep1: TdxLayoutSeparatorItem;
-    procedure UpdateApplicationSkin(SkinResourceFileName, SkinName: string);
+    procedure UpdateApplicationSkin(SkinResourceFileName {, SkinName}: string);
 
     procedure FormCreate(Sender: TObject);
     procedure edtUserNameEnter(Sender: TObject);
@@ -96,11 +96,13 @@ uses
 procedure TLoginFrm.FormCreate(Sender: TObject);
 var
   RegKey: TRegistry;
-  ErrorMsg, SkinResourceFileName, SkinName: string;
-//  RootFolder, RootDataFolder, OldRootFolder: string;
-//  I: Integer;
+  SkinResourceFileName: string;
+{$IFDEF DEBUG}
+  ErrorMsg: string;
+{$ENDIF}
+  //  RootFolder, RootDataFolder, OldRootFolder: string;
+  //  I: Integer;
 begin
-  inherited;
   Height := 225;
   Width := 505;
   layMain.Align := alClient;
@@ -109,18 +111,18 @@ begin
   pnlUnderline.Style.BorderStyle := ebsNone;
   litLogo.Image.Transparent := True;
   FLoginAttempt := 0;
-  FAppTitle :=  Application.Title;
+  FAppTitle := Application.Title;
   RegKey := TRegistry.Create(KEY_ALL_ACCESS or KEY_WRITE or KEY_WOW64_64KEY);
   RegKey.RootKey := HKEY_CURRENT_USER;
   RegKey.OpenKey(KEY_USER_DATA, True);
 
   try
-    {$IFDEF DEBUG}
+{$IFDEF DEBUG}
     ErrorMsg := '';
     if not LocalDSServerIsRunning(LOCAL_VB_SHELL_DS_SERVER, ErrorMsg) then
     begin
       Beep;
-//      sbrMain.Panels[1].Text := 'Not Connected to Datasnap server';
+      //      sbrMain.Panels[1].Text := 'Not Connected to Datasnap server';
 
       Beep;
       DisplayMsg(
@@ -134,7 +136,7 @@ begin
         [mbOK]
         );
     end;
-    {$ENDIF}
+{$ENDIF}
 
     if VBBaseDM = nil then
       VBBaseDM := TVBBaseDM.Create(nil);
@@ -148,16 +150,16 @@ begin
 
     VBShellDM.ShellResource := VBBaseDM.GetShellResource;
     SkinResourceFileName := {VBShellDM.ShellResource.RootFolder + }RESOURCE_FOLDER + SKIN_RESOURCE_FILE;
-    SkinName := VBShellDM.ShellResource.SkinName;
+    //    SkinName := VBShellDM.ShellResource.SkinName;
+    //
+    //    if Length(Trim(SkinName)) = 0 then
+    //      SkinName := DEFAULT_SKIN_NAME;
 
-    if Length(Trim(SkinName)) = 0 then
-      SkinName := DEFAULT_SKIN_NAME;
+    UpdateApplicationSkin(SkinResourceFileName {, SkinName});
 
-    UpdateApplicationSkin(SkinResourceFileName, SkinName);
-
-//    sbrMain.Panels[0].Text := 'VB Apps Ver: ' +
-//      RUtils.GetBuildInfo(Application.ExeName, rbLongFormat) + ' - ' +
-//      verInfo.StringFileInfo['LegalTrademarks'];
+    //    sbrMain.Panels[0].Text := 'VB Apps Ver: ' +
+    //      RUtils.GetBuildInfo(Application.ExeName, rbLongFormat) + ' - ' +
+    //      verInfo.StringFileInfo['LegalTrademarks'];
 
     sbrMain.Panels[0].Text := 'VB Shell Ver: ' +
       RUtils.GetBuildInfo(Application.ExeName, rbLongFormat);
@@ -170,25 +172,25 @@ begin
       'C:\Data\Xml\DB Info.xml', VBShellDM.cdsDBInfo.UpdateOptions.Generatorname,
       VBShellDM.cdsDBInfo.UpdateOptions.UpdateTableName);
 
-//    WhereClause := ' WHERE U.LOGIN_NAME = ' +
-//
-//    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, ONE_SPACE,
-//      'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
-//      VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
+    //    WhereClause := ' WHERE U.LOGIN_NAME = ' +
+    //
+    //    VBBaseDM.GetData(24, VBShellDM.cdsSystemUser, VBShellDM.cdsSystemUser.Name, ONE_SPACE,
+    //      'C:\Data\Xml\System User.xml', VBShellDM.cdsSystemUser.UpdateOptions.Generatorname,
+    //      VBShellDM.cdsSystemUser.UpdateOptions.UpdateTableName);
 
-//ORDER BY
-// U.FIRST_NAME,
-// U.LAST_NAME
+    //ORDER BY
+    // U.FIRST_NAME,
+    // U.LAST_NAME
 
-//    if RegKey.ValueExists('Login Name') then
-//    begin
-//      if Length(Trim(RegKey.ReadString('Login Name'))) > 0 then
-//      begin
-//        UserName := Trim(RegKey.ReadString('Login Name'));
-//        VBShellDM.cdsSystemUser.Locate('LOGIN_NAME', UserName, [loCaseInsensitive]);
-//        lucSystemUser.Text := UserName;
-//      end;
-//    end;
+    //    if RegKey.ValueExists('Login Name') then
+    //    begin
+    //      if Length(Trim(RegKey.ReadString('Login Name'))) > 0 then
+    //      begin
+    //        UserName := Trim(RegKey.ReadString('Login Name'));
+    //        VBShellDM.cdsSystemUser.Locate('LOGIN_NAME', UserName, [loCaseInsensitive]);
+    //        lucSystemUser.Text := UserName;
+    //      end;
+    //    end;
 
     if RegKey.ValueExists('Login Name') then
     begin
@@ -210,18 +212,16 @@ end;
 
 procedure TLoginFrm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-  inherited;
   if Key = VK_ESCAPE then
     actCancelLogin.Execute;
 end;
 
 procedure TLoginFrm.FormShow(Sender: TObject);
 begin
-  inherited;
-//  if Showing then
-//  begin
-//    edtUserName.SetFocus;
-//  end;
+  //  if Showing then
+  //  begin
+  //    edtUserName.SetFocus;
+  //  end;
 
   if Showing then
   begin
@@ -256,24 +256,23 @@ begin
   if VBShellDM.cdsSystemUser.IsEmpty then
     raise ELoginCredentialError.Create('Invalid user name and/or password.');
 
-//  if VBShellDM.cdsDBInfo.FieldByName('DB_VERSION').Asinteger > 12 then
-//  begin
+  //  if VBShellDM.cdsDBInfo.FieldByName('DB_VERSION').Asinteger > 12 then
+  //  begin
   ED := TED.Create(EKEY1, EKEY2);
   try
     PW := ED.DCString(VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString);
-//    PW := ED.DCString(VBBaseDM.UserData.PW);
+    //    PW := ED.DCString(VBBaseDM.UserData.PW);
   finally
     ED.Free;
   end;
 
   Result := SameText(UserName, VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString)
     and SameStr(Password, PW);
-//  end;
+  //  end;
 end;
 
 procedure TLoginFrm.DoCancelLogin(Sender: TObject);
 begin
-  inherited;
   Application.Terminate
 end;
 
@@ -281,14 +280,13 @@ procedure TLoginFrm.DoLogin(Sender: TObject);
 var
   RegKey: TRegistry;
 begin
-  inherited;
-//  VBBaseDM.UserData.UserID := VBShellDM.cdsSystemUser.FieldByName('ID').AsInteger;
-//  VBBaseDM.UserData.UserName := VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString;
-//  VBBaseDM.UserData.FirstName := VBShellDM.cdsSystemUser.FieldByName('FIRST_NAME').AsString;
-//  VBBaseDM.UserData.LastName := VBShellDM.cdsSystemUser.FieldByName('LAST_NAME').AsString;
-//  VBBaseDM.UserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
-//  VBBaseDM.UserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
-//  VBBaseDM.UserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
+  //  VBBaseDM.UserData.UserID := VBShellDM.cdsSystemUser.FieldByName('ID').AsInteger;
+  //  VBBaseDM.UserData.UserName := VBShellDM.cdsSystemUser.FieldByName('LOGIN_NAME').AsString;
+  //  VBBaseDM.UserData.FirstName := VBShellDM.cdsSystemUser.FieldByName('FIRST_NAME').AsString;
+  //  VBBaseDM.UserData.LastName := VBShellDM.cdsSystemUser.FieldByName('LAST_NAME').AsString;
+  //  VBBaseDM.UserData.EmailAddress := VBShellDM.cdsSystemUser.FieldByName('EMAIL_ADDRESS').AsString;
+  //  VBBaseDM.UserData.AccountEnabled := RUtils.IntegerToBoolean(VBShellDM.cdsSystemUser.FieldByName('ACCOUNT_ENABLED').AsInteger);
+  //  VBBaseDM.UserData.PW := VBShellDM.cdsSystemUser.FieldByName('PASSWORD').AsString;
 
   Inc(FLoginAttempt);
   if not LoginToDB(edtUserName.Text, edtPassword.Text) then
@@ -389,27 +387,27 @@ end;
 
 procedure TLoginFrm.edtUserNameEnter(Sender: TObject);
 begin
-  inherited;
   TcxTextEdit(Sender).Style.Color := clWhite;
 end;
 
 procedure TLoginFrm.edtUserNameExit(Sender: TObject);
 begin
-  inherited;
   TcxTextEdit(Sender).Style.Color :=
     cxLookAndFeels.RootLookAndFeel.SkinPainter.DefaultContentColor;
 end;
 
 procedure TLoginFrm.edtUserNamePropertiesChange(Sender: TObject);
 begin
-  inherited;
   actLogin.Enabled :=
     (Length(Trim(edtUserName.Text)) > 0) and
     (Length(Trim(edtPassword.Text)) > 0)
 end;
 
-procedure TLoginFrm.UpdateApplicationSkin(SkinResourceFileName, SkinName: string);
+procedure TLoginFrm.UpdateApplicationSkin(SkinResourceFileName {, SkinName}: string);
+var
+  SkinName: string;
 begin
+  SkinName := VBBaseDM.GetSkinFromRegistry;
   sknController.BeginUpdate;
   try
     sknController.NativeStyle := False;

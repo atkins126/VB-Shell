@@ -14,7 +14,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
     ExplicitWidth = 305
     ExplicitHeight = 191
     object edtNewPassword: TcxTextEdit [0]
-      Left = 111
+      Left = 121
       Top = 67
       AutoSize = False
       BeepOnEnter = False
@@ -34,7 +34,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
       Width = 150
     end
     object edtConfirmPassword: TcxTextEdit [1]
-      Left = 111
+      Left = 121
       Top = 92
       AutoSize = False
       BeepOnEnter = False
@@ -55,7 +55,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
       Width = 150
     end
     object edtCurrentPassword: TcxTextEdit [2]
-      Left = 111
+      Left = 121
       Top = 11
       AutoSize = False
       BeepOnEnter = False
@@ -76,7 +76,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
       Width = 150
     end
     object btnOK: TcxButton [3]
-      Left = 149
+      Left = 159
       Top = 129
       Width = 75
       Height = 25
@@ -87,7 +87,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
       OnClick = btnOKClick
     end
     object btnCancel: TcxButton [4]
-      Left = 230
+      Left = 240
       Top = 129
       Width = 75
       Height = 25
@@ -99,7 +99,7 @@ inherited ChangePasswordFrm: TChangePasswordFrm
       TabOrder = 5
     end
     object btnContinue: TcxButton [5]
-      Left = 1
+      Left = 11
       Top = 36
       Width = 75
       Height = 25

@@ -1580,6 +1580,10 @@ inherited MainFrm: TMainFrm
         item
           Visible = True
           ItemName = 'btnChangePassword'
+        end
+        item
+          Visible = True
+          ItemName = 'btnSendMessage'
         end>
       OneOnRow = True
       Row = 0
@@ -1606,6 +1610,13 @@ inherited MainFrm: TMainFrm
     object btnChangePassword: TdxBarLargeButton
       Action = actChangePassword
       Category = 0
+    end
+    object btnSendMessage: TdxBarLargeButton
+      Caption = 'Send Message'
+      Category = 0
+      Hint = 'Send Message'
+      Visible = ivAlways
+      OnClick = btnSendMessageClick
     end
   end
   object popBarForms: TdxBarPopupMenu
